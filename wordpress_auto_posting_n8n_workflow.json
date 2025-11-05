@@ -1,0 +1,374 @@
+{
+  "name": "WordPress Auto-Posting Workflow with n8n",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "e9c56ca2-e6b1-4a5f-b465-b4fa4f584136",
+      "name": "Start — Manual Trigger"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fa6ebedf-8d5f-424f-a038-ac1e16c79075",
+              "name": "title",
+              "value": "Common Insurance Claims in HR Consulting (& How to Protect Your Business From Them)",
+              "type": "string"
+            },
+            {
+              "id": "5cc9db02-8227-49a0-8c49-34014db98e42",
+              "name": "raw_text",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "26a01ba9-b2bb-4cb1-8d39-9cb7a681f1d1",
+              "name": "source_url",
+              "value": "https://docs.google.com/document/d/1utDJFLMZl3wcsVyNXsYJcmbPtf-8yfp9mWqLSDlgvmU/export?format=txt",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        0
+      ],
+      "id": "256267ac-6bfd-4040-bb73-1b1a27726cfd",
+      "name": "Input — Title & Doc URL"
+    },
+    {
+      "parameters": {
+        "url": "={{$json[\"source_url\"]}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        448,
+        0
+      ],
+      "id": "56ce378b-667d-4b82-a8f6-69223b6b235a",
+      "name": "Fetch Doc (TXT)"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a059e939-0252-4acf-95cd-c07581092387",
+              "name": "raw_text",
+              "value": "={{$json[\"data\"]}}",
+              "type": "string"
+            },
+            {
+              "id": "13643ab5-49a6-4593-bc72-7bae5aac03a7",
+              "name": "title",
+              "value": "={{ $('Input — Title & Doc URL').item.json.title }}",
+              "type": "string"
+            },
+            {
+              "id": "6ed1d56a-0ff2-4cb3-b343-6e754f66634b",
+              "name": "source_url",
+              "value": "={{ $('Input — Title & Doc URL').item.json.source_url }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        672,
+        0
+      ],
+      "id": "bc85df21-632e-4170-9307-cb5652306a98",
+      "name": "Normalize — raw_text"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-pro",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-pro"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are a blog formatter. Convert the given raw article text into WordPress-ready content.\n\nReturn STRICT JSON only (no prose):\n{\n  \"title\": \"...\",\n  \"slug\": \"kebab-case-max-8-words\",\n  \"excerpt\": \"1–2 sentence summary (~30 words max)\",\n  \"tags\": [\"...\"],\n  \"categories\": [\"...\"],\n  \"hero_image_prompt\": \"concise photorealistic prompt for a header image\",\n  \"content_html\": \"<h1>...</h1><p>...</p><h2>...</h2><ul>...</ul><blockquote>...</blockquote>\"\n}\n\nRules:\n- Preserve the author’s tone; fix grammar lightly.\n- Use semantic HTML only (h1–h3, p, ul/ol, li, a, blockquote, strong, em).\n- No inline styles, scripts, or images.\n- Keep paragraphs short; use headings/subheadings for clarity.\n- Output must be valid JSON (no commentary, code fences, or trailing commas).\n\nSource Title: {{$json.title || \"Untitled\"}}\nRaw Text:\n{{$json.raw_text}}\n"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        896,
+        0
+      ],
+      "id": "a78b03ba-6b1d-4c8b-963a-bccd0065d2fc",
+      "name": "AI formatting",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ZbYYNXQWHIPgS7Vc",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a4618383-edf2-4ad0-bbf3-0cd0f861726d",
+              "name": "ai_json_clean",
+              "value": "={{ $json.content.parts[0].text\n    .replace('```json', '')\n    .replace('```', '')\n    .trim()\n}}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1248,
+        0
+      ],
+      "id": "a4054973-a8cf-4c0d-ac61-6a8d7ec9a024",
+      "name": "Extract & Clean Gemini JSON"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "320750a9-f3b3-4652-9631-c8fc138fc1fb",
+              "name": "filename",
+              "value": "={{$json.ai_json_clean.slug}}.html",
+              "type": "string"
+            },
+            {
+              "id": "3a399bc0-71cb-4d9e-aa6d-e3248f9c5757",
+              "name": "html_content",
+              "value": "={{ $json.ai_json_clean.content_html }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1472,
+        0
+      ],
+      "id": "1928f2b0-8efe-4249-9cdc-f5560224963c",
+      "name": "Prepare Preview File"
+    },
+    {
+      "parameters": {
+        "operation": "toText",
+        "sourceProperty": "html_content",
+        "options": {
+          "fileName": "={{ $json.filename }}"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1696,
+        0
+      ],
+      "id": "01d04a5c-c289-413c-ad8a-83a614e9fd3a",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://testing.insurancecanopy.com/wp-json/wp/v2/posts",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "wordpressApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "title",
+              "value": "={{ $('Extract & Clean Gemini JSON').item.json.ai_json_clean.title }}"
+            },
+            {
+              "name": "content",
+              "value": "={{ $('Extract & Clean Gemini JSON').item.json.ai_json_clean.content_html }}"
+            },
+            {
+              "name": "status",
+              "value": "draft"
+            },
+            {
+              "name": "excerpt",
+              "value": "={{ $('Extract & Clean Gemini JSON').item.json.ai_json_clean.excerpt }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1920,
+        0
+      ],
+      "id": "bb7654e4-9771-4230-9830-f02d6f678bb6",
+      "name": "HTTP Request",
+      "credentials": {
+        "wordpressApi": {
+          "id": "RyXjKxNlInWmhmGR",
+          "name": "Wordpress account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Start — Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Input — Title & Doc URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Input — Title & Doc URL": {
+      "main": [
+        [
+          {
+            "node": "Fetch Doc (TXT)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Doc (TXT)": {
+      "main": [
+        [
+          {
+            "node": "Normalize — raw_text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize — raw_text": {
+      "main": [
+        [
+          {
+            "node": "AI formatting",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI formatting": {
+      "main": [
+        [
+          {
+            "node": "Extract & Clean Gemini JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract & Clean Gemini JSON": {
+      "main": [
+        [
+          {
+            "node": "Prepare Preview File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Preview File": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b67512f4-78fb-4bc6-8e3a-1ec85d0b364c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ef49efcb22c4215a4ddcd51dff8a1de411753551af145bddfe295939345a798b"
+  },
+  "id": "FFthH5B3mmdRYLE0",
+  "tags": [
+    {
+      "name": "assignment",
+      "id": "CsQepduoSYnDvNrj",
+      "updatedAt": "2025-11-05T17:06:35.275Z",
+      "createdAt": "2025-11-05T17:06:35.275Z"
+    },
+    {
+      "name": "demo",
+      "id": "OgYFbSkoDenzAeef",
+      "updatedAt": "2025-11-05T17:06:13.484Z",
+      "createdAt": "2025-11-05T17:06:13.484Z"
+    }
+  ]
+}
