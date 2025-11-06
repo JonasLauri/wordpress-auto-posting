@@ -21,7 +21,7 @@ It uses Gemini AI to generate structured article JSON (title, excerpt, content, 
    Retrieves the document text from the provided link.
 3. **Normalize — raw_text**  
    Cleans and prepares the text for AI formatting.
-4. **AI Formatting (Gemini)**  
+4. **AI Formatting (Gemini-2.5-pro)**  
    Generates structured JSON with title, excerpt, content HTML, and metadata.
 5. **Extract & Clean Gemini JSON**  
    Parses the AI output into usable fields.
@@ -63,10 +63,10 @@ It uses Gemini AI to generate structured article JSON (title, excerpt, content, 
 ### **Areas for Improvement**
 
 - Add automated **Google Drive trigger** (folder watcher) to replace manual start.  
-- Experiment with **Gemini prompt tuning** for improved styling and layout (headings, images, subheadings).  
+- Experiment with **Gemini prompt tuning** to achieve more refined HTML styling and layout (headings, subheadings, images).  
+- Improve **AI node processing time** to make content generation faster and more efficient during each execution (now around 10s).  
 - Add **duplicate prevention logic** to avoid re-posting identical drafts.  
 - Implement **dynamic category and tag mapping** using extracted keywords or Gemini metadata.  
-- Extend workflow to **publish directly** through the WordPress REST API once live credentials are active. 
 
 ### **Blockers / Limitations**
 
