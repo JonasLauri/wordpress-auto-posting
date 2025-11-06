@@ -40,7 +40,7 @@ It uses Gemini AI to generate structured article JSON (title, excerpt, content, 
 1. Open n8n editor.
 2. Import `wordpress-auto-posting.json`.
 3. Set up Gemini and WordPress credentials.
-4. Run the workflow manually or via Webhook input.
+4. Run the workflow manually.
 
 ##
 
